@@ -1,0 +1,61 @@
+// Prisma schema for AI-Powered API Documentation Generator.
+// SQLite is used so the project runs with zero external infrastructure.
+// Run `bun run db:push` (which inlines DATABASE_URL="$(pwd)/db/custom.db")
+// after cloning to materialise the database file.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model ApiSpec {
+  id          String           @id @default(cuid())
+  name        String
+  version     String           @default("1.0.0")
+  sourceType  String
+  sourceUrl   String?
+  rawSpec     String
+  parsedSpec  String
+  serverUrl   String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  endpoints   Endpoint[]
+  changelogs  ChangelogEntry[]
+}
+
+model Endpoint {
+  id          String   @id @default(cuid())
+  specId      String
+  spec        ApiSpec  @relation(fields: [specId], references: [id], onDelete: Cascade)
+  method      String
+  path        String
+  summary     String?
+  description String?
+  parameters  String
+  requestBody String?
+  responses   String
+  examples    String?
+  tags        String
+  createdAt   DateTime @default(now())
+
+  @@index([specId])
+}
+
+model ChangelogEntry {
+  id          String   @id @default(cuid())
+  specId      String
+  spec        ApiSpec  @relation(fields: [specId], references: [id], onDelete: Cascade)
+  changeType  String
+  method      String?
+  path        String?
+  description String
+  fromVersion String?
+  toVersion   String?
+  createdAt   DateTime @default(now())
+
+  @@index([specId])
+}
